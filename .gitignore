@@ -1,3 +1,2 @@
-Make/*
-!Make/*.exe
-!Make/*.lua
+.vs/*
+out/*
