@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <SDL.h>
 #include <iostream>
+#include "Log.h"
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -118,13 +119,16 @@ bool initGL()
 
 bool init()
 {
+    Taurus::Log::Init();
+    LOG_DEBUG("Engine Start!");
+
     //Initialization flag
     bool success = true;
 
     //Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+        LOG_ERROR("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
         success = false;
     }
     else
@@ -135,10 +139,10 @@ bool init()
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 
         //Create window
-        gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        gWindow = SDL_CreateWindow("TaurusEngine", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
         if (gWindow == NULL)
         {
-            printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+            LOG_ERROR("Window could not be created! SDL Error: %s\n", SDL_GetError());
             success = false;
         }
         else
@@ -147,7 +151,7 @@ bool init()
             gContext = SDL_GL_CreateContext(gWindow);
             if (gContext == NULL)
             {
-                printf("OpenGL context could not be created! SDL Error: %s\n", SDL_GetError());
+                LOG_ERROR("OpenGL context could not be created! SDL Error: %s\n", SDL_GetError());
                 success = false;
             }
             else
@@ -161,13 +165,13 @@ bool init()
                 //Use Vsync
                 if (SDL_GL_SetSwapInterval(1) < 0)
                 {
-                    printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+                    LOG_ERROR("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
                 }
 
                 //Initialize OpenGL
                 if (!initGL())
                 {
-                    printf("Unable to initialize OpenGL!\n");
+                    LOG_ERROR("Unable to initialize OpenGL!\n");
                     success = false;
                 }
             }
@@ -207,7 +211,7 @@ int main(int argc, char* args[])
     //Start up SDL and create window
     if (!init())
     {
-        printf("Failed to initialize!\n");
+        LOG_ERROR("Failed to initialize!\n");
     }
     else
     {
