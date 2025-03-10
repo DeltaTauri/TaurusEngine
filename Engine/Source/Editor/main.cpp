@@ -1,5 +1,5 @@
 #include <glad/glad.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <iostream>
 #include "Log.h"
 
@@ -139,7 +139,7 @@ bool init()
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 
         //Create window
-        gWindow = SDL_CreateWindow("TaurusEngine", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        gWindow = SDL_CreateWindow("TaurusEngine", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
         if (gWindow == NULL)
         {
             LOG_ERROR("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -228,7 +228,7 @@ int main(int argc, char* args[])
             while (SDL_PollEvent(&e) != 0)
             {
                 //User requests quit
-                if (e.type == SDL_QUIT)
+                if (e.type == SDL_EVENT_QUIT)
                 {
                     quit = true;
                 }
