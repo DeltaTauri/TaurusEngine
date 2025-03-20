@@ -12,3 +12,13 @@ target_link_libraries(${TARGET_NAME} PRIVATE TaurusRuntime)
 
 target_include_directories(${TARGET_NAME} PRIVATE ${EXTRA_INCLUDES})
 
+if (WIN32)
+    add_custom_command(TARGET ${TARGET_NAME}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:${TARGET_NAME}>
+    )
+    add_custom_command(TARGET ${TARGET_NAME}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:spdlog::spdlog> $<TARGET_FILE_DIR:${TARGET_NAME}>
+    )
+endif()
