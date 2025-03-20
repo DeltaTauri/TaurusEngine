@@ -1,4 +1,4 @@
-#include "Log.h"
+#include "LogSystem.h"
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -7,9 +7,7 @@
 
 namespace Taurus
 {
-    std::shared_ptr<spdlog::logger> Log::m_logger;
-
-    void Log::Init()
+    LogSystem::LogSystem()
     {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         console_sink->set_level(spdlog::level::trace);
@@ -22,4 +20,9 @@ namespace Taurus
         spdlog::register_logger(m_logger);
     }
 
+    LogSystem::~LogSystem()
+    {
+        m_logger->flush();
+        spdlog::drop_all();
+    }
 }

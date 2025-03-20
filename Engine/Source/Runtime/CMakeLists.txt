@@ -14,9 +14,6 @@ add_library(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(${TARGET_NAME} PRIVATE ${OPENGL_gl_LIBRARY} SDL3::SDL3)
 target_link_libraries(${TARGET_NAME} PUBLIC spdlog::spdlog)
 
-#target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/External/spdlog/include)
-#target_link_libraries(${TARGET_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/External/spdlog/lib/spdlog.lib)
-
 target_include_directories(${TARGET_NAME} PRIVATE ${EXTRA_INCLUDES})
 
 if (WIN32)
