@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Window/BaseWindow.h"
+#include <SDL3/SDL.h>
 
 namespace Taurus {
 
@@ -19,10 +20,12 @@ namespace Taurus {
 		void SetVSync(bool enabled) override;
 		bool IsVSync() const override;
 
+		virtual void* GetNativeWindow() const { return m_NativeWindow; }
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
 	private:
+		SDL_Window* m_NativeWindow;
 		bool m_Quit = false;
 		int Width, Height;
 	};

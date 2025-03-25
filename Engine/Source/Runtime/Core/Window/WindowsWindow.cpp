@@ -1,10 +1,12 @@
 #include <glad/glad.h>
-#include <SDL3/SDL.h>
 #include "Core/Window/WindowsWindow.h"
 #include "Core/Macro.h"
 
+#include <imgui.h>
+#include <backends/imgui_impl_sdl3.h>
+#include <backends/imgui_impl_opengl3.h>
+
 namespace Taurus {
-    SDL_Window* gWindow = NULL;
     SDL_GLContext gContext;
 
     unsigned int VBO, VAO;
@@ -100,6 +102,20 @@ namespace Taurus {
         return true;
     }
 
+    bool initImgui(SDL_Window* window)
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        ImGui::StyleColorsDark();
+
+        ImGui_ImplSDL3_InitForOpenGL(window, gContext);
+        ImGui_ImplOpenGL3_Init("#version 100");
+        return true;
+    }
+
 	WindowsWindow::WindowsWindow(const WindowProps& props)
 	{
 		Init(props);
@@ -127,8 +143,8 @@ namespace Taurus {
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 
             //Create window
-            gWindow = SDL_CreateWindow(props.Title, props.Width, props.Height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-            if (gWindow == NULL)
+            m_NativeWindow = SDL_CreateWindow(props.Title, props.Width, props.Height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+            if (m_NativeWindow == NULL)
             {
                 LOG_ERROR("Window could not be created! SDL Error: %s\n", SDL_GetError());
                 success = false;
@@ -136,7 +152,7 @@ namespace Taurus {
             else
             {
                 //Create context
-                gContext = SDL_GL_CreateContext(gWindow);
+                gContext = SDL_GL_CreateContext(m_NativeWindow);
                 if (gContext == NULL)
                 {
                     LOG_ERROR("OpenGL context could not be created! SDL Error: %s\n", SDL_GetError());
@@ -161,6 +177,12 @@ namespace Taurus {
                         LOG_ERROR("Unable to initialize OpenGL!\n");
                         success = false;
                     }
+
+                    if (!initImgui(m_NativeWindow))
+                    {
+                        LOG_ERROR("Unable to initialize Imgui!\n");
+                        success = false;
+                    }
                 }
             }
         }
@@ -174,45 +196,48 @@ namespace Taurus {
         glDeleteBuffers(1, &VBO);
         glDeleteProgram(shaderProgram);
 
-        SDL_DestroyWindow(gWindow);
-        gWindow = NULL;
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
+
+        SDL_DestroyWindow(m_NativeWindow);
+        m_NativeWindow = NULL;
         SDL_Quit();
 	}
 
 	void WindowsWindow::OnUpdate()
 	{
-        SDL_Event e;
-        while (SDL_PollEvent(&e) != 0)
-        {
-            switch (e.type)
-            {
-            case SDL_EVENT_QUIT:
-                m_Quit = true;
-                break;
-            case SDL_EVENT_KEY_DOWN:
-            case SDL_EVENT_KEY_UP:
-                OnKey(e.key.key, e.key.scancode, e.key.down ? 1 : 0, e.key.mod);
-                break;
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            case SDL_EVENT_MOUSE_BUTTON_UP:
-                OnMouseButton(e.button.button, e.button.down ? 1 : 0, 0);
-                break;
-            case SDL_EVENT_MOUSE_MOTION:
-                OnCursorPos(e.motion.x, e.motion.y);
-                break;
-            case SDL_EVENT_MOUSE_WHEEL:
+		SDL_Event e;
+		while (SDL_PollEvent(&e) != 0)
+		{
+            ImGui_ImplSDL3_ProcessEvent(&e);
+			switch (e.type)
+			{
+			case SDL_EVENT_QUIT:
+				m_Quit = true;
+				break;
+			case SDL_EVENT_KEY_DOWN:
+			case SDL_EVENT_KEY_UP:
+				OnKey(e.key.key, e.key.scancode, e.key.down ? 1 : 0, e.key.mod);
+				break;
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+				OnMouseButton(e.button.button, e.button.down ? 1 : 0, 0);
+				break;
+			case SDL_EVENT_MOUSE_MOTION:
+				OnCursorPos(e.motion.x, e.motion.y);
+				break;
+			case SDL_EVENT_MOUSE_WHEEL:
 				OnScroll(e.wheel.x, e.wheel.y);
-            case SDL_EVENT_DROP_FILE:
-                //TODO
-               //onDrop(e.wheel.x, e.wheel.y);
-                break;
-            case SDL_EVENT_WINDOW_RESIZED:
-				SDL_GetWindowSize(gWindow, &Width, &Height);
+				break;
+			case SDL_EVENT_WINDOW_RESIZED:
+				SDL_GetWindowSize(m_NativeWindow, &Width, &Height);
 				OnWindowSize(Width, Height);
-            default:
-                break;
-            }
-        }
+				break;
+			default:
+				break;
+			}
+		}
 
         //Render quad
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -222,22 +247,31 @@ namespace Taurus {
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+        bool show_demo_window = true;
+        ImGui::ShowDemoWindow(&show_demo_window);
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         //Update screen
-        SDL_GL_SwapWindow(gWindow);
+        SDL_GL_SwapWindow(m_NativeWindow);
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)
 	{
 		if (enabled)
-			SDL_SetWindowSurfaceVSync(gWindow, SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE);
+			SDL_SetWindowSurfaceVSync(m_NativeWindow, SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE);
 		else
-            SDL_SetWindowSurfaceVSync(gWindow, SDL_WINDOW_SURFACE_VSYNC_DISABLED);
+            SDL_SetWindowSurfaceVSync(m_NativeWindow, SDL_WINDOW_SURFACE_VSYNC_DISABLED);
 	}
 
 	bool WindowsWindow::IsVSync() const
 	{
         int ret = 0;
-		SDL_GetWindowSurfaceVSync(gWindow, &ret);
+		SDL_GetWindowSurfaceVSync(m_NativeWindow, &ret);
 		return ret == SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE;
 	}
     
