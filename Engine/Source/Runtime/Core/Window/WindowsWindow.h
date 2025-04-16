@@ -24,6 +24,7 @@ namespace Taurus {
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
+
 	private:
 		SDL_Window* m_NativeWindow;
 		bool m_Quit = false;
