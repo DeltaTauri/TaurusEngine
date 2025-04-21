@@ -3,8 +3,6 @@
 #include "Function/Global/GlobalContext.h"
 #include "Core/Window/WindowSystem.h"
 
-
-
 namespace Taurus
 {
 	TaurusEditor::TaurusEditor() {}
@@ -27,8 +25,8 @@ namespace Taurus
 
 		while (!shouldClose)
 		{
-			shouldClose = m_engine_runtime->TickOneFrame(0);
-
+			const float delta_time = m_engine_runtime->CalculateDeltaTime();
+			shouldClose = m_engine_runtime->TickOneFrame(delta_time);
 		}
 	}
 }

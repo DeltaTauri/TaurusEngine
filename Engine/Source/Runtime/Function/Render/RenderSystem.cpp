@@ -1,16 +1,21 @@
 #include "Function/Render/RenderSystem.h"
 #include "Function/Render/Interface/Shader.h"
 #include "Function/Render/Interface/VertexArray.h"
+#include "Function/Global/GlobalContext.h"
+#include "Function/Input/InputSystem.h"
+#include "Function/Input/KeyCode.h"
 
 namespace Taurus
 {
     const char* vertexShaderSource = "#version 320 es\n"
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec3 aColor;\n"
+        "uniform mat4 u_ViewProjection;\n"
+        "uniform mat4 u_Model;\n"
         "out vec3 ourColor;\n"
         "void main()\n"
         "{\n"
-        "   gl_Position = vec4(aPos, 1.0);\n"
+        "   gl_Position = u_ViewProjection * u_Model * vec4(aPos, 1.0);\n"
         "   ourColor = aColor;\n"
         "}\0";
 
@@ -72,15 +77,36 @@ namespace Taurus
         m_RHI = RHI::Create();
         m_RenderPipline = std::make_shared<RenderPipline>();
         m_RenderPipline->m_RHI = m_RHI;
+        m_RenderCamera = std::make_shared<RenderCamera>();
+        m_RenderCamera->SetProjection({ -1.2f, 1.2f, -0.9f,0.9f });
+        m_RenderCamera->SetPosition(0, 0, 0);
     }
 
     void RenderSystem::Tick(float delta_time)
     {
+        glm::vec3 cameraPos = m_RenderCamera->GetPosition();
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::KEY_W))
+            cameraPos.y += 0.5f * delta_time;
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::KEY_S))
+            cameraPos.y -= 0.5f * delta_time;
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::KEY_A))
+            cameraPos.x -= 0.5f * delta_time;
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::KEY_D))
+            cameraPos.x += 0.5f * delta_time;
+        m_RenderCamera->SetPosition(cameraPos);
+
+        float camearaRot = m_RenderCamera->GetRotation();
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::KEY_Q))
+            camearaRot -= 10 * delta_time;
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::KEY_E))
+            camearaRot += 10 * delta_time;
+        m_RenderCamera->SetRotation(camearaRot);
+
         m_RHI->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         m_RHI->Clear();
-        m_RenderPipline->BeginScene();
-        m_RenderPipline->Submit(m_TriangleVertexArray, m_Shader);
-        m_RenderPipline->Submit(m_QuadVertexArray, m_Shader);
+        m_RenderPipline->BeginScene(m_RenderCamera);
+        m_RenderPipline->Submit(m_TriangleVertexArray, m_Shader, glm::mat4(1.0f));
+        m_RenderPipline->Submit(m_QuadVertexArray, m_Shader, glm::mat4(1.0f));
         m_RenderPipline->EndScene();
     }
 

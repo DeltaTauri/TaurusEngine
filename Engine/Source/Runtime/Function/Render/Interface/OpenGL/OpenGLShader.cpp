@@ -1,6 +1,7 @@
 #include "Function/Render/Interface/OpenGL/OpenGLShader.h"
 #include <glad/glad.h>
 #include "Core/Macro.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Taurus
 {
@@ -65,5 +66,15 @@ namespace Taurus
     void OpenGLShader::Unbind() const
     {
         glUseProgram(0);
+    }
+    void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value)
+    {
+        int location = glGetUniformLocation(m_ShaderProgram, name.c_str());
+        if (location == -1)
+        {
+            LOG_ERROR("ERROR::SHADER::UNIFORM::NOT_FOUND\n", name);
+            return;
+        }
+        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
 }

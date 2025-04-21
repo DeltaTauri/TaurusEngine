@@ -11,3 +11,7 @@ if(NOT TARGET spdlog)
 	add_subdirectory(spdlog spdlogLibrary)
 	set_target_properties(spdlog PROPERTIES FOLDER ${third_party_folder}/spdlog)
 endif()
+
+if(NOT TARGET glm)
+	add_subdirectory(glm glmLibrary)
+endif()
