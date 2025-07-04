@@ -19,7 +19,7 @@ namespace Taurus
         if (!success)
         {
             glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            LOG_ERROR("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n", infoLog);
+            LOG_ERROR("ERROR::SHADER::VERTEX::COMPILATION_FAILED:{}\n", infoLog);
             glDeleteShader(vertexShader);
             TAURUS_ASSERT(false);
         }
@@ -33,7 +33,7 @@ namespace Taurus
         if (!success)
         {
             glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            LOG_ERROR("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n", infoLog);
+            LOG_ERROR("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED:{}\n", infoLog);
             glDeleteShader(fragmentShader);
             TAURUS_ASSERT(false);
         }
@@ -46,7 +46,7 @@ namespace Taurus
         if (!success)
         {
             glGetProgramInfoLog(m_ShaderProgram, 512, NULL, infoLog);
-            LOG_ERROR("ERROR::SHADER::PROGRAM::LINK_FAILED\n", infoLog);
+            LOG_ERROR("ERROR::SHADER::PROGRAM::LINK_FAILED:{}\n", infoLog);
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             glDeleteProgram(m_ShaderProgram);
@@ -67,6 +67,16 @@ namespace Taurus
     {
         glUseProgram(0);
     }
+    void OpenGLShader::SetInt(const std::string& name, int value)
+    {
+        int location = glGetUniformLocation(m_ShaderProgram, name.c_str());
+        if (location == -1)
+        {
+            LOG_ERROR("ERROR::SHADER::UNIFORM::NOT_FOUND\n", name);
+            return;
+        }
+        glUniform1i(location, value);
+    }
     void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value)
     {
         int location = glGetUniformLocation(m_ShaderProgram, name.c_str());
@@ -77,4 +87,5 @@ namespace Taurus
         }
         glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
+
 }

@@ -11,5 +11,6 @@ add_library(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(${TARGET_NAME} PRIVATE ${OPENGL_gl_LIBRARY} SDL3::SDL3)
 target_link_libraries(${TARGET_NAME} PUBLIC spdlog::spdlog)
 target_link_libraries(${TARGET_NAME} PUBLIC glm::glm)
+target_link_libraries(${TARGET_NAME} PRIVATE stb)
 
 target_include_directories(${TARGET_NAME} PRIVATE ${EXTRA_INCLUDES})

@@ -1,6 +1,7 @@
 #include "Function/Render/RenderSystem.h"
 #include "Function/Render/Interface/Shader.h"
 #include "Function/Render/Interface/VertexArray.h"
+#include "Function/Render/Interface/Texture.h"
 #include "Function/Global/GlobalContext.h"
 #include "Function/Input/InputSystem.h"
 #include "Function/Input/KeyCode.h"
@@ -9,61 +10,61 @@ namespace Taurus
 {
     const char* vertexShaderSource = "#version 320 es\n"
         "layout (location = 0) in vec3 aPos;\n"
-        "layout (location = 1) in vec3 aColor;\n"
+        "layout (location = 1) in vec2 a_TexCoord;\n"
         "uniform mat4 u_ViewProjection;\n"
         "uniform mat4 u_Model;\n"
-        "out vec3 ourColor;\n"
+        "out vec2 ourUv;\n"
         "void main()\n"
         "{\n"
         "   gl_Position = u_ViewProjection * u_Model * vec4(aPos, 1.0);\n"
-        "   ourColor = aColor;\n"
+        "   ourUv = a_TexCoord;\n"
         "}\0";
 
     const char* fragmentShaderSource = "#version 320 es\n"
         "precision mediump float;\n"
         "out vec4 FragColor;\n"
-        "in vec3 ourColor;\n"
+        "in vec2 ourUv;\n"
+        "uniform sampler2D u_Texture;\n"
         "void main()\n"
         "{\n"
-        "   FragColor = vec4(ourColor, 1.0f);\n"
+        //"   FragColor = vec4(ourUv, 1.0f, 1.0f);\n"
+        "   FragColor = texture(u_Texture, ourUv);\n"
         "}\n\0";
 
     std::shared_ptr<Shader> m_Shader;
-    std::shared_ptr<VertexArray> m_TriangleVertexArray;
     std::shared_ptr<VertexArray> m_QuadVertexArray;
+    std::shared_ptr<Texture> m_Texture;
 
     void InitData()
     {
         m_Shader = Shader::Create("OpenGLShader", vertexShaderSource, fragmentShaderSource);
 
         float vertices[] = {
-            // positions         // colors
-             0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // bottom right
-            -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom left
-             0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f,   // top 
-             0.0f, 0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // bottom left
-             0.5f, 0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom right
-             0.0f, 0.75f, 0.0f,  1.0f, 0.0f, 0.0f,  // top left
-             0.5f, 0.75f, 0.0f,  0.0f, 1.0f, 0.0f,  // top right
+            //position           uv
+             -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+              0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+              0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
+             -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
         };
-        unsigned int triangleIndices[3] = { 0,1,2 };
-        unsigned int quadIndices[6] = { 3,4,5,4,5,6 };
+        unsigned int quadIndices[6] = { 0,1,2,2,3,0 };
         BufferLayout layout = {
             {ShaderDataType::Float3, "a_Position"},
-            {ShaderDataType::Float3, "a_Color"},
+            {ShaderDataType::Float2, "a_TexCoord"},
         };
 
-        m_TriangleVertexArray = VertexArray::Create();
         std::shared_ptr<VertexBuffer> vertexBuffer = VertexBuffer::Create(vertices, sizeof(vertices));
         vertexBuffer->SetLayout(layout);
-        m_TriangleVertexArray->AddVertexBuffer(vertexBuffer);
-        std::shared_ptr<IndexBuffer> m_triangleIndexBuffer = IndexBuffer::Create(triangleIndices, sizeof(triangleIndices));
-        m_TriangleVertexArray->SetIndexBuffer(m_triangleIndexBuffer);
 
         m_QuadVertexArray = VertexArray::Create();
         m_QuadVertexArray->AddVertexBuffer(vertexBuffer);
         std::shared_ptr<IndexBuffer> m_quadIndexBuffer = IndexBuffer::Create(quadIndices, sizeof(quadIndices));
         m_QuadVertexArray->SetIndexBuffer(m_quadIndexBuffer);
+
+        m_Texture = Texture2D::Create("Checkerboard.png");
+        m_Texture->Bind(0);
+
+        m_Shader->Bind();
+        m_Shader->SetInt("u_Texture", 0);
     }
 
     RenderSystem::RenderSystem()
@@ -105,7 +106,6 @@ namespace Taurus
         m_RHI->SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         m_RHI->Clear();
         m_RenderPipline->BeginScene(m_RenderCamera);
-        m_RenderPipline->Submit(m_TriangleVertexArray, m_Shader, glm::mat4(1.0f));
         m_RenderPipline->Submit(m_QuadVertexArray, m_Shader, glm::mat4(1.0f));
         m_RenderPipline->EndScene();
     }
